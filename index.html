@@ -1,175 +1,237 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 
 <head>
+    <meta charset="UTF-8">
 
-<meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width,
+                   initial-scale=1,
+                   maximum-scale=1,
+                   user-scalable=no">
 
-<meta name="viewport"
-      content="width=device-width,
-               initial-scale=1,
-               maximum-scale=1,
-               user-scalable=no">
+    <title>VR BOX MR</title>
 
-<title>VR BOX</title>
+    <link rel="stylesheet" href="style.css">
 
-<link
-    rel="stylesheet"
-    href="style.css">
+    <!-- MediaPipe Hands -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 
 </head>
 
 <body>
 
-<!-- CÂMERA MR -->
+    <!-- =================================
+         CÂMERA TRASEIRA / MR
+    ================================== -->
 
-<video
-    id="camera"
-    autoplay
-    muted
-    playsinline>
-</video>
-
-
-<!-- MENU 3D -->
-
-<div id="world">
-
-    <div id="panel">
-
-        <header>
-
-            <div class="logo">
-                🥽 VR BOX
-            </div>
-
-            <div id="status">
-                3DoF • MR
-            </div>
-
-        </header>
+    <video
+        id="camera"
+        autoplay
+        muted
+        playsinline>
+    </video>
 
 
-        <main>
+    <!-- =================================
+         TELA INICIAL
+    ================================== -->
 
-            <h1>
-                Bem-vindo 👋
-            </h1>
+    <div id="permissionScreen">
+
+        <div class="permissionBox">
+
+            <div class="bigLogo">🥽</div>
+
+            <h1>VR BOX</h1>
 
             <p>
-                Seu espaço virtual
+                Realidade Mista
             </p>
 
+            <button id="cameraButton">
+                📷 ATIVAR CÂMERA
+            </button>
 
-            <div class="apps">
+            <small>
+                Use a câmera traseira para
+                experimentar a MR.
+            </small>
 
-                <button
-                    class="app"
-                    onclick="openApp('youtube')">
-
-                    <span>▶️</span>
-                    YouTube
-
-                </button>
-
-
-                <button
-                    class="app"
-                    onclick="openApp('games')">
-
-                    <span>🎮</span>
-                    Jogos
-
-                </button>
-
-
-                <button
-                    class="app"
-                    onclick="openApp('browser')">
-
-                    <span>🌐</span>
-                    Navegador
-
-                </button>
-
-
-                <button
-                    class="app"
-                    onclick="openApp('videos')">
-
-                    <span>🎬</span>
-                    Vídeos
-
-                </button>
-
-
-                <button
-                    class="app"
-                    onclick="openApp('music')">
-
-                    <span>🎵</span>
-                    Música
-
-                </button>
-
-
-                <button
-                    class="app"
-                    onclick="openApp('settings')">
-
-                    <span>⚙️</span>
-                    Configurações
-
-                </button>
-
-            </div>
-
-        </main>
-
-
-        <!-- JANELA DO APP -->
-
-        <div id="appWindow">
-
-            <div id="appHeader">
-
-                <span id="appTitle">
-                    VR BOX
-                </span>
-
-                <button
-                    onclick="closeApp()">
-                    ✕
-                </button>
-
-            </div>
-
-
-            <iframe
-                id="appFrame">
-            </iframe>
+            <div id="permissionError"></div>
 
         </div>
 
     </div>
 
-</div>
+
+    <!-- =================================
+         MUNDO 3D
+    ================================== -->
+
+    <div id="world">
+
+        <div id="panel">
+
+            <!-- HEADER / ÁREA PARA ARRASTAR -->
+
+            <header id="panelHeader">
+
+                <div class="logo">
+                    🥽 VR BOX
+                </div>
+
+                <div id="status">
+                    3DoF • MR
+                </div>
+
+            </header>
 
 
-<!-- PONTEIRO DA MÃO -->
+            <!-- HOME -->
 
-<div id="handPointer">
-</div>
+            <section id="home">
+
+                <h1>
+                    Bem-vindo 👋
+                </h1>
+
+                <p>
+                    Seu espaço virtual
+                </p>
 
 
-<div id="handStatus">
-    ✋ Inicializando...
-</div>
+                <div class="apps">
+
+                    <button
+                        class="app"
+                        data-app="youtube">
+
+                        <span>▶️</span>
+
+                        <strong>
+                            YouTube
+                        </strong>
+
+                    </button>
 
 
-<script src="app.js">
-</script>
+                    <button
+                        class="app"
+                        data-app="games">
+
+                        <span>🎮</span>
+
+                        <strong>
+                            Jogos
+                        </strong>
+
+                    </button>
+
+
+                    <button
+                        class="app"
+                        data-app="videos">
+
+                        <span>🎬</span>
+
+                        <strong>
+                            Vídeos
+                        </strong>
+
+                    </button>
+
+
+                    <button
+                        class="app"
+                        data-app="music">
+
+                        <span>🎵</span>
+
+                        <strong>
+                            Música
+                        </strong>
+
+                    </button>
+
+
+                    <button
+                        class="app"
+                        data-app="browser">
+
+                        <span>🌐</span>
+
+                        <strong>
+                            Navegador
+                        </strong>
+
+                    </button>
+
+
+                    <button
+                        class="app"
+                        data-app="settings">
+
+                        <span>⚙️</span>
+
+                        <strong>
+                            Configurações
+                        </strong>
+
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================
+                 JANELA DOS APLICATIVOS
+            ================================== -->
+
+            <section id="appWindow">
+
+                <div id="appTop">
+
+                    <span id="appTitle">
+                        Aplicativo
+                    </span>
+
+                    <button id="closeApp">
+                        ✕
+                    </button>
+
+                </div>
+
+
+                <div id="appContent">
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </div>
+
+
+    <!-- =================================
+         PONTEIRO DA MÃO
+    ================================== -->
+
+    <div id="handPointer"></div>
+
+
+    <div id="handStatus">
+        ✋ Aguardando câmera
+    </div>
+
+
+    <!-- =================================
+         JAVASCRIPT
+    ================================== -->
+
+    <script src="app.js"></script>
 
 </body>
 

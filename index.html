@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width,
+               initial-scale=1,
+               maximum-scale=1,
+               user-scalable=no">
+
+<title>VR BOX</title>
+
+<link
+    rel="stylesheet"
+    href="style.css">
+
+</head>
+
+<body>
+
+<!-- CÂMERA MR -->
+
+<video
+    id="camera"
+    autoplay
+    muted
+    playsinline>
+</video>
+
+
+<!-- MENU 3D -->
+
+<div id="world">
+
+    <div id="panel">
+
+        <header>
+
+            <div class="logo">
+                🥽 VR BOX
+            </div>
+
+            <div id="status">
+                3DoF • MR
+            </div>
+
+        </header>
+
+
+        <main>
+
+            <h1>
+                Bem-vindo 👋
+            </h1>
+
+            <p>
+                Seu espaço virtual
+            </p>
+
+
+            <div class="apps">
+
+                <button
+                    class="app"
+                    onclick="openApp('youtube')">
+
+                    <span>▶️</span>
+                    YouTube
+
+                </button>
+
+
+                <button
+                    class="app"
+                    onclick="openApp('games')">
+
+                    <span>🎮</span>
+                    Jogos
+
+                </button>
+
+
+                <button
+                    class="app"
+                    onclick="openApp('browser')">
+
+                    <span>🌐</span>
+                    Navegador
+
+                </button>
+
+
+                <button
+                    class="app"
+                    onclick="openApp('videos')">
+
+                    <span>🎬</span>
+                    Vídeos
+
+                </button>
+
+
+                <button
+                    class="app"
+                    onclick="openApp('music')">
+
+                    <span>🎵</span>
+                    Música
+
+                </button>
+
+
+                <button
+                    class="app"
+                    onclick="openApp('settings')">
+
+                    <span>⚙️</span>
+                    Configurações
+
+                </button>
+
+            </div>
+
+        </main>
+
+
+        <!-- JANELA DO APP -->
+
+        <div id="appWindow">
+
+            <div id="appHeader">
+
+                <span id="appTitle">
+                    VR BOX
+                </span>
+
+                <button
+                    onclick="closeApp()">
+                    ✕
+                </button>
+
+            </div>
+
+
+            <iframe
+                id="appFrame">
+            </iframe>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- PONTEIRO DA MÃO -->
+
+<div id="handPointer">
+</div>
+
+
+<div id="handStatus">
+    ✋ Inicializando...
+</div>
+
+
+<script src="app.js">
+</script>
+
+</body>
+
+</html>

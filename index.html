@@ -1,238 +1,26 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width,
-                   initial-scale=1,
-                   maximum-scale=1,
-                   user-scalable=no">
-
-    <title>VR BOX MR</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VR Mixed Reality Tester</title>
     <link rel="stylesheet" href="style.css">
-
-    <!-- MediaPipe Hands -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-
+    <!-- Importação do A-Frame para WebXR -->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="app.js" defer></script>
 </head>
-
 <body>
 
-    <!-- =================================
-         CÂMERA TRASEIRA / MR
-    ================================== -->
-
-    <video
-        id="camera"
-        autoplay
-        muted
-        playsinline>
-    </video>
-
-
-    <!-- =================================
-         TELA INICIAL
-    ================================== -->
-
-    <div id="permissionScreen">
-
-        <div class="permissionBox">
-
-            <div class="bigLogo">🥽</div>
-
-            <h1>VR BOX</h1>
-
-            <p>
-                Realidade Mista
-            </p>
-
-            <button id="cameraButton">
-                📷 ATIVAR CÂMERA
-            </button>
-
-            <small>
-                Use a câmera traseira para
-                experimentar a MR.
-            </small>
-
-            <div id="permissionError"></div>
-
-        </div>
-
-    </div>
-
-
-    <!-- =================================
-         MUNDO 3D
-    ================================== -->
-
-    <div id="world">
-
-        <div id="panel">
-
-            <!-- HEADER / ÁREA PARA ARRASTAR -->
-
-            <header id="panelHeader">
-
-                <div class="logo">
-                    🥽 VR BOX
-                </div>
-
-                <div id="status">
-                    3DoF • MR
-                </div>
-
-            </header>
-
-
-            <!-- HOME -->
-
-            <section id="home">
-
-                <h1>
-                    Bem-vindo 👋
-                </h1>
-
-                <p>
-                    Seu espaço virtual
-                </p>
-
-
-                <div class="apps">
-
-                    <button
-                        class="app"
-                        data-app="youtube">
-
-                        <span>▶️</span>
-
-                        <strong>
-                            YouTube
-                        </strong>
-
-                    </button>
-
-
-                    <button
-                        class="app"
-                        data-app="games">
-
-                        <span>🎮</span>
-
-                        <strong>
-                            Jogos
-                        </strong>
-
-                    </button>
-
-
-                    <button
-                        class="app"
-                        data-app="videos">
-
-                        <span>🎬</span>
-
-                        <strong>
-                            Vídeos
-                        </strong>
-
-                    </button>
-
-
-                    <button
-                        class="app"
-                        data-app="music">
-
-                        <span>🎵</span>
-
-                        <strong>
-                            Música
-                        </strong>
-
-                    </button>
-
-
-                    <button
-                        class="app"
-                        data-app="browser">
-
-                        <span>🌐</span>
-
-                        <strong>
-                            Navegador
-                        </strong>
-
-                    </button>
-
-
-                    <button
-                        class="app"
-                        data-app="settings">
-
-                        <span>⚙️</span>
-
-                        <strong>
-                            Configurações
-                        </strong>
-
-                    </button>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================
-                 JANELA DOS APLICATIVOS
-            ================================== -->
-
-            <section id="appWindow">
-
-                <div id="appTop">
-
-                    <span id="appTitle">
-                        Aplicativo
-                    </span>
-
-                    <button id="closeApp">
-                        ✕
-                    </button>
-
-                </div>
-
-
-                <div id="appContent">
-
-                </div>
-
-            </section>
-
-        </div>
-
-    </div>
-
-
-    <!-- =================================
-         PONTEIRO DA MÃO
-    ================================== -->
-
-    <div id="handPointer"></div>
-
-
-    <div id="handStatus">
-        ✋ Aguardando câmera
-    </div>
-
-
-    <!-- =================================
-         JAVASCRIPT
-    ================================== -->
-
-    <script src="app.js"></script>
+    <a-scene webxr="requiredFeatures: hand-tracking, hit-test, passthrough;">
+        <!-- Controladores de Rastreamento de Mãos -->
+        <a-entity id="leftHand" hand-tracking-controls="hand: left"></a-entity>
+        <a-entity id="rightHand" hand-tracking-controls="hand: right"></a-entity>
+
+        <!-- Objeto interativo no espaço misto -->
+        <a-box id="interactiveBox" position="0 1.5 -1.5" rotation="0 45 45" color="#00ffcc" interactive-object></a-box>
+
+        <a-sky color="#111111"></a-sky>
+    </a-scene>
 
 </body>
-
 </html>

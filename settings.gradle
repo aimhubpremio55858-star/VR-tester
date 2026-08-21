@@ -1,0 +1,10 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = "VR-BOX-MR"
+include(":app")

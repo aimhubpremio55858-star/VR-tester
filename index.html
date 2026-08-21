@@ -1,21 +1,46 @@
-```html
 <!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rastreamento de Mão</title>
+    <title>Rastreamento de Mão - VR Edition</title>
     <style>
-        body, html {
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background: #0f172a;
-            font-family: system-ui, -apple-system, sans-serif;
+            background: #0a0e27;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             color: white;
         }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Normal Mode */
+        #normal-mode {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            overflow: hidden;
+        }
+
         #webcam {
             position: absolute;
             top: 0;
@@ -26,6 +51,7 @@
             transform: scaleX(-1);
             z-index: 1;
         }
+
         #output_canvas {
             position: absolute;
             top: 0;
@@ -35,43 +61,248 @@
             transform: scaleX(-1);
             z-index: 2;
         }
-        #ui-layer {
+
+        /* VR Mode */
+        #vr-mode {
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: row;
+            background: #000;
+        }
+
+        .vr-eye {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            border-right: 2px solid #333;
+        }
+
+        .vr-eye:last-child {
+            border-right: none;
+        }
+
+        .vr-eye video,
+        .vr-eye canvas {
             position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .vr-eye video {
+            transform: scaleX(-1);
+            z-index: 1;
+        }
+
+        .vr-eye canvas {
+            transform: scaleX(-1);
+            z-index: 2;
+        }
+
+        /* UI Controls */
+        #ui-layer {
+            position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.85);
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-size: 14px;
-            z-index: 10;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(8px);
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            background: rgba(10, 14, 39, 0.92);
+            padding: 16px 24px;
+            border-radius: 16px;
+            z-index: 100;
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
         }
-        #start-btn {
-            background: linear-gradient(135deg, #6366f1, #a855f7);
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .status {
+            font-size: 13px;
+            color: #94a3b8;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .status.active {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        select, button {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
             color: white;
             border: none;
-            padding: 10px 20px;
-            font-size: 14px;
-            font-weight: 600;
+            padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
-            margin-top: 8px;
-            display: none;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        select {
+            min-width: 140px;
+        }
+
+        button {
+            padding: 8px 14px;
+            min-width: auto;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        button.active {
+            background: linear-gradient(135deg, #10b981, #34d399);
+        }
+
+        select:hover {
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        #start-btn {
+            background: linear-gradient(135deg, #ec4899, #f43f5e);
+            padding: 10px 18px;
+        }
+
+        /* Indicator Lights */
+        .indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6b7280;
+            animation: pulse 2s infinite;
+        }
+
+        .indicator.active {
+            background: #10b981;
+            animation: pulse-active 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes pulse-active {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Info Panel */
+        #info-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(10, 14, 39, 0.9);
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            font-size: 11px;
+            color: #cbd5e1;
+            z-index: 100;
+            font-family: 'Courier New', monospace;
+        }
+
+        .info-item {
+            margin: 4px 0;
+        }
+
+        .info-label {
+            color: #64b5f6;
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #ui-layer {
+                width: calc(100% - 40px);
+                left: 20px;
+                transform: none;
+                padding: 12px 16px;
+            }
+
+            .controls {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            select {
+                width: 100%;
+            }
+
+            #info-panel {
+                bottom: 10px;
+                right: 10px;
+                padding: 8px 12px;
+                font-size: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="ui-layer">
-        <span id="status-msg">A inicializar a câmara...</span><br>
-        <button id="start-btn" onclick="initCamera()">Ativar Câmara</button>
+    <div class="container">
+        <!-- Normal Mode -->
+        <div id="normal-mode">
+            <div class="video-container">
+                <video id="webcam" autoplay playsinline muted></video>
+                <canvas id="output_canvas"></canvas>
+            </div>
+        </div>
+
+        <!-- VR Mode -->
+        <div id="vr-mode">
+            <div class="vr-eye">
+                <video id="webcam-left" autoplay playsinline muted></video>
+                <canvas id="output_canvas_left"></canvas>
+            </div>
+            <div class="vr-eye">
+                <video id="webcam-right" autoplay playsinline muted></video>
+                <canvas id="output_canvas_right"></canvas>
+            </div>
+        </div>
     </div>
 
-    <video id="webcam" autoplay playsinline muted></video>
-    <canvas id="output_canvas"></canvas>
+    <!-- UI Layer -->
+    <div id="ui-layer">
+        <div class="controls">
+            <div class="indicator" id="status-indicator"></div>
+            <span class="status" id="status-msg">Inicializando...</span>
+            
+            <select id="camera-select">
+                <option value="user">Câmera Frontal</option>
+                <option value="environment">Câmera Traseira</option>
+            </select>
+
+            <button id="vr-toggle">Modo Normal</button>
+            <button id="start-btn" style="display:none;">Iniciar Câmera</button>
+        </div>
+    </div>
+
+    <!-- Info Panel -->
+    <div id="info-panel">
+        <div class="info-item">
+            <span class="info-label">Modo:</span> <span id="mode-info">Normal</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Câmera:</span> <span id="camera-info">Frontal</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Mãos:</span> <span id="hands-info">0</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">FPS:</span> <span id="fps-info">0</span>
+        </div>
+    </div>
 
     <!-- MediaPipe Hands -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -82,58 +313,172 @@
         const videoElement = document.getElementById('webcam');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
+        
         const statusMsg = document.getElementById('status-msg');
+        const statusIndicator = document.getElementById('status-indicator');
         const startBtn = document.getElementById('start-btn');
+        const cameraSelect = document.getElementById('camera-select');
+        const vrToggle = document.getElementById('vr-toggle');
 
+        // VR Elements
+        const vrMode = document.getElementById('vr-mode');
+        const normalMode = document.getElementById('normal-mode');
+        const videoLeftVR = document.getElementById('webcam-left');
+        const videoRightVR = document.getElementById('webcam-right');
+        const canvasLeftVR = document.getElementById('output_canvas_left');
+        const canvasRightVR = document.getElementById('output_canvas_right');
+
+        let isVRMode = false;
         let hands = null;
         let cameraInstance = null;
+        let currentFacingMode = 'user';
+        let stream = null;
+        let frameCount = 0;
+        let lastTime = Date.now();
 
-        function onResults(results) {
-            canvasElement.width = videoElement.videoWidth || window.innerWidth;
-            canvasElement.height = videoElement.videoHeight || window.innerHeight;
+        // Configurar toggle VR
+        vrToggle.addEventListener('click', toggleVRMode);
+        cameraSelect.addEventListener('change', changeCameraFacing);
+
+        function toggleVRMode() {
+            isVRMode = !isVRMode;
+            
+            if (isVRMode) {
+                normalMode.style.display = 'none';
+                vrMode.style.display = 'flex';
+                vrToggle.textContent = 'Modo Normal';
+                vrToggle.classList.add('active');
+                document.getElementById('mode-info').textContent = 'VR';
+                setupVRStreams();
+            } else {
+                vrMode.style.display = 'none';
+                normalMode.style.display = 'flex';
+                vrToggle.textContent = 'Modo VR';
+                vrToggle.classList.remove('active');
+                document.getElementById('mode-info').textContent = 'Normal';
+                cleanupVRStreams();
+            }
+        }
+
+        function setupVRStreams() {
+            // Duplica o stream para ambos os olhos
+            if (stream) {
+                videoLeftVR.srcObject = stream;
+                videoRightVR.srcObject = stream;
+            }
+        }
+
+        function cleanupVRStreams() {
+            videoLeftVR.srcObject = null;
+            videoRightVR.srcObject = null;
+        }
+
+        async function changeCameraFacing() {
+            const newFacing = cameraSelect.value;
+            if (newFacing !== currentFacingMode) {
+                currentFacingMode = newFacing;
+                document.getElementById('camera-info').textContent = 
+                    newFacing === 'user' ? 'Frontal' : 'Traseira';
+                
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                
+                if (cameraInstance) {
+                    await cameraInstance.stop();
+                }
+                
+                await initCamera();
+            }
+        }
+
+        function onResults(results, canvasCtx, canvasElement) {
+            canvasElement.width = window.innerWidth;
+            canvasElement.height = window.innerHeight;
+
+            if (isVRMode) {
+                canvasElement.width = window.innerWidth / 2;
+            }
 
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
             if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                statusMsg.innerText = `Mãos detetadas: ${results.multiHandLandmarks.length}`;
-                statusMsg.style.color = '#34d399';
+                const handCount = results.multiHandLandmarks.length;
+                statusMsg.innerText = `✓ ${handCount} mão${handCount > 1 ? 's' : ''} detectada${handCount > 1 ? 's' : ''}`;
+                statusMsg.classList.add('active');
+                statusIndicator.classList.add('active');
+                document.getElementById('hands-info').textContent = handCount;
 
-                for (const landmarks of results.multiHandLandmarks) {
-                    // Desenha o esqueleto completo da mão
+                for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+                    const landmarks = results.multiHandLandmarks[i];
+                    const handedness = results.multiHandedness[i];
+                    
+                    // Cor diferente para cada mão
+                    const color = handedness.label === 'Right' ? '#ec4899' : '#3b82f6';
+                    const accentColor = handedness.label === 'Right' ? '#f472b6' : '#60a5fa';
+
+                    // Desenha as conexões
                     drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {
-                        color: '#38bdf8',
-                        lineWidth: 4
+                        color: color,
+                        lineWidth: 5
                     });
+
+                    // Desenha os pontos
                     drawLandmarks(canvasCtx, landmarks, {
-                        color: '#f43f5e',
+                        color: accentColor,
                         lineWidth: 2,
-                        radius: 5
+                        radius: 6
                     });
+
+                    // Label da mão
+                    if (landmarks.length > 0) {
+                        const x = landmarks[0].x * canvasElement.width;
+                        const y = landmarks[0].y * canvasElement.height - 20;
+                        canvasCtx.font = 'bold 14px sans-serif';
+                        canvasCtx.fillStyle = color;
+                        canvasCtx.fillText(handedness.label + ' Hand', x, y);
+                    }
                 }
             } else {
-                statusMsg.innerText = "Mostre a sua mão em frente à câmara";
-                statusMsg.style.color = '#94a3b8';
+                statusMsg.innerText = "Mostre suas mãos para a câmera";
+                statusMsg.classList.remove('active');
+                statusIndicator.classList.remove('active');
+                document.getElementById('hands-info').textContent = '0';
             }
             canvasCtx.restore();
+
+            // Atualizar FPS
+            frameCount++;
+            const now = Date.now();
+            if (now - lastTime >= 1000) {
+                document.getElementById('fps-info').textContent = frameCount;
+                frameCount = 0;
+                lastTime = now;
+            }
         }
 
         async function initCamera() {
             startBtn.style.display = 'none';
-            statusMsg.innerText = "A pedir permissão da câmara...";
+            statusMsg.innerText = "Pedindo acesso à câmera...";
 
             try {
                 const constraints = {
                     video: {
-                        facingMode: "user",
+                        facingMode: currentFacingMode,
                         width: { ideal: 1280 },
                         height: { ideal: 720 }
                     }
                 };
 
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
                 videoElement.srcObject = stream;
 
+                if (isVRMode) {
+                    setupVRStreams();
+                }
+
+                // Inicializar Hands
                 hands = new Hands({
                     locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
                 });
@@ -141,37 +486,63 @@
                 hands.setOptions({
                     maxNumHands: 2,
                     modelComplexity: 1,
-                    minDetectionConfidence: 0.5,
+                    minDetectionConfidence: 0.7,
                     minTrackingConfidence: 0.5
                 });
 
-                hands.onResults(onResults);
+                // Para modo normal
+                if (!isVRMode) {
+                    hands.onResults((results) => onResults(results, canvasCtx, canvasElement));
 
-                cameraInstance = new Camera(videoElement, {
-                    onFrame: async () => {
-                        await hands.send({ image: videoElement });
-                    },
-                    width: 1280,
-                    height: 720
-                });
+                    cameraInstance = new Camera(videoElement, {
+                        onFrame: async () => {
+                            await hands.send({ image: videoElement });
+                        },
+                        width: 1280,
+                        height: 720
+                    });
+                } else {
+                    // Para modo VR - processa ambos os canvases
+                    const ctxLeft = canvasLeftVR.getContext('2d');
+                    const ctxRight = canvasRightVR.getContext('2d');
+
+                    hands.onResults((results) => {
+                        onResults(results, ctxLeft, canvasLeftVR);
+                        onResults(results, ctxRight, canvasRightVR);
+                    });
+
+                    cameraInstance = new Camera(videoElement, {
+                        onFrame: async () => {
+                            await hands.send({ image: videoElement });
+                        },
+                        width: 1280,
+                        height: 720
+                    });
+                }
 
                 await cameraInstance.start();
-                statusMsg.innerText = "Câmara ativa. À espera de mãos...";
+                statusMsg.innerText = "Câmera ativa ✓";
+                document.getElementById('camera-info').textContent = 
+                    currentFacingMode === 'user' ? 'Frontal' : 'Traseira';
+
             } catch (error) {
-                console.error("Erro ao iniciar câmara:", error);
-                statusMsg.innerText = "Erro ao aceder à câmara. Verifique as permissões.";
+                console.error("Erro ao iniciar câmera:", error);
+                statusMsg.innerText = "❌ Erro ao acessar câmera";
+                statusIndicator.classList.remove('active');
                 startBtn.style.display = 'inline-block';
+                startBtn.textContent = "Tentar Novamente";
             }
         }
 
-        // Tenta iniciar automaticamente ao carregar
+        // Auto-start
         window.addEventListener('DOMContentLoaded', () => {
             initCamera().catch(() => {
                 startBtn.style.display = 'inline-block';
-                statusMsg.innerText = "Clique para permitir o acesso à câmara.";
+                statusMsg.innerText = "Clique para permitir câmera";
             });
         });
+
+        startBtn.addEventListener('click', initCamera);
     </script>
 </body>
 </html>
-``` Tá, tá vendo isso aí? Agora adiciona, ele tá pra câmera frontal. Eu quero a câmera traseira e adiciona aquele modo VR também.

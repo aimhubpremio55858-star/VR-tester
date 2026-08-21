@@ -1,29 +1,51 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu App VR no GitHub</title>
-    <!-- Carrega a biblioteca A-Frame para Realidade Virtual -->
+    <meta charset="utf-8">
+    <title>App MR & Hand Tracking</title>
+    <!-- Carrega o A-Frame -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 </head>
 <body>
     <a-scene>
-        <!-- Céu com cor de fundo -->
-        <a-sky color="#1a1a2e"></a-sky>
+        <!-- Ambiente / Céu para Realidade Mista -->
+        <a-sky color="#0b0b1a"></a-sky>
 
-        <!-- Formas 3D no espaço virtual -->
-        <!-- Caixa Vermelha -->
-        <a-box position="-1 0.5 -3" rotation="0 45 0" color="#e94560"></a-box>
+        <!-- Objeto interativo 3D no centro -->
+        <a-box id="meuObjeto" position="0 1.5 -2" rotation="0 45 0" color="#4CC3D9" scale="0.4 0.4 0.4"></a-box>
 
-        <!-- Esfera Azul -->
-        <a-sphere position="1 1.2 -4" radius="0.7" color="#0f3460"></a-sphere>
+        <!-- Câmera do usuário -->
+        <a-entity camera position="0 1.6 0" look-controls></a-entity>
 
-        <!-- Cilindro Amarelo -->
-        <a-box position="0 0.5 -5" rotation="0 0 0" color="#f9ed69" scale="2 0.1 2"></a-box>
-
-        <!-- Câmera do usuário (olhar ao redor) -->
-        <a-camera position="0 1.6 0"></a-camera>
+        <!-- Rastreamento da Mão Esquerda -->
+        <a-entity id="leftHand" hand-tracking-controls="hand: left; modelStyle: mesh;"></a-entity>
+        
+        <!-- Rastreamento da Mão Direita com script de interação -->
+        <a-entity id="rightHand" hand-tracking-controls="hand: right; modelStyle: mesh;" interacao-mao></a-entity>
     </a-scene>
+
+    <!-- Código JavaScript para lógica de Hand Tracking e Gestos -->
+    <script>
+        // Registra um componente customizado no A-Frame para detectar os gestos da mão
+        AFRAME.registerComponent('interacao-mao', {
+            init: function () {
+                const el = this.el;
+                const objeto3D = document.querySelector('#meuObjeto');
+
+                // Evento disparado quando o usuário faz o gesto de pinça (juntar o dedão com o indicador)
+                el.addEventListener('pinchstarted', function (evt) {
+                    console.log('Pinça iniciada!');
+                    // Muda a cor do cubo aleatoriamente ao fazer o gesto com a mão
+                    const cores = ["#EF2D5E", "#FFC65D", "#4CC3D9", "#7BC8A4", "#9b59b6"];
+                    const corAleatoria = cores[Math.floor(Math.random() * cores.length)];
+                    objeto3D.setAttribute('color', corAleatoria);
+                });
+
+                el.addEventListener('pinchended', function (evt) {
+                    console.log('Pinça finalizada!');
+                });
+            }
+        });
+    </script>
 </body>
 </html>

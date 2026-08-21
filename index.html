@@ -1,1 +1,47 @@
-a
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <title>MR & Hand Tracking</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+</head>
+<body>
+    <!-- Configuração de Realidade Aumentada (MR) Imersiva -->
+    <a-scene webxr="requiredFeatures: hand-tracking, hit-test, local-floor; optionalFeatures: dom-overlay; overlayElement: #overlay;">
+        
+        <!-- O céu é removido ou tornado transparente para mostrar a câmera -->
+        <a-entity id="camera" camera position="0 1.6 0" look-controls></a-entity>
+
+        <!-- Objeto central -->
+        <a-box id="meuObjeto" 
+               position="0 1.2 -1" 
+               rotation="0 45 0" 
+               color="#4CC3D9" 
+               scale="0.2 0.2 0.2">
+        </a-box>
+
+        <!-- Hand Tracking -->
+        <a-entity hand-tracking-controls="hand: left;"></a-entity>
+        <a-entity hand-tracking-controls="hand: right;" interacao-mao></a-entity>
+    </a-scene>
+
+    <!-- Botão de entrada para solicitar permissão de imersão -->
+    <div id="overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+        <button onclick="document.querySelector('a-scene').enterVR()" style="padding: 20px; font-size: 20px;">
+            Iniciar Experiência MR
+        </button>
+    </div>
+
+    <script>
+        AFRAME.registerComponent('interacao-mao', {
+            init: function () {
+                const objeto = document.querySelector('#meuObjeto');
+                this.el.addEventListener('pinchstarted', function () {
+                    const cores = ["#EF2D5E", "#FFC65D", "#4CC3D9", "#7BC8A4", "#9b59b6"];
+                    objeto.setAttribute('color', cores[Math.floor(Math.random() * cores.length)]);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

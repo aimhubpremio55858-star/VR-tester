@@ -1,294 +1,229 @@
-/* =========================================
-   VR BOX
-   3DoF + Câmera + Hand Tracking
-========================================= */
+// ==========================================
+// VR BOX — CÂMERA TRASEIRA + MR
+// ==========================================
+
+const camera = document.getElementById("camera");
+const status = document.getElementById("status");
+const handStatus = document.getElementById("handStatus");
+
+let cameraStream = null;
 
 
-/* =========================
-   ELEMENTOS
-========================= */
-
-const camera =
-    document.getElementById("camera");
-
-const panel =
-    document.getElementById("panel");
-
-const pointer =
-    document.getElementById(
-        "handPointer"
-    );
-
-const status =
-    document.getElementById(
-        "status"
-    );
-
-const handStatus =
-    document.getElementById(
-        "handStatus"
-    );
-
-
-/* =========================
-   CÂMERA
-========================= */
+// ==========================================
+// INICIAR CÂMERA
+// ==========================================
 
 async function startCamera() {
 
+    console.log("VR BOX: iniciando câmera...");
+
+    if (!navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia) {
+
+        showCameraError(
+            "Seu navegador não permite acesso à câmera."
+        );
+
+        return;
+    }
+
+
+    handStatus.textContent =
+        "📷 Pedindo permissão da câmera...";
+
+
     try {
 
-        const stream =
-            await navigator
-                .mediaDevices
-                .getUserMedia({
+        // Primeira tentativa:
+        // câmera traseira
 
-                    video: {
+        cameraStream =
+            await navigator.mediaDevices.getUserMedia({
 
-                        facingMode:
-                            "environment"
-
+                video: {
+                    facingMode: {
+                        ideal: "environment"
                     },
 
-                    audio: false
+                    width: {
+                        ideal: 1920
+                    },
 
-                });
+                    height: {
+                        ideal: 1080
+                    }
+                },
 
+                audio: false
+
+            });
+
+
+        // Coloca a câmera no vídeo
 
         camera.srcObject =
-            stream;
+            cameraStream;
 
+
+        // Aguarda o vídeo carregar
+
+        await new Promise((resolve) => {
+
+            camera.onloadedmetadata =
+                resolve;
+
+        });
+
+
+        await camera.play();
+
+
+        // ==================================
+        // SUCESSO
+        // ==================================
 
         status.textContent =
-            "3DoF • MR • ATIVO";
-
+            "3DoF • MR • CÂMERA";
 
         handStatus.textContent =
-            "✋ Câmera ativa";
+            "📷 MR ativa";
 
+
+        console.log(
+            "VR BOX: câmera traseira ativada!"
+        );
+
+
+        // Descobre qual câmera foi usada
+
+        const tracks =
+            cameraStream.getVideoTracks();
+
+        if (tracks.length > 0) {
+
+            console.log(
+                "Câmera:",
+                tracks[0].label
+            );
+
+        }
 
     }
 
-    catch(error) {
+    catch (error) {
 
-        console.error(error);
+        console.error(
+            "Erro da câmera:",
+            error
+        );
 
-        status.textContent =
-            "CÂMERA OFF";
 
-        handStatus.textContent =
-            "❌ Permissão da câmera necessária";
+        showCameraError(error);
 
     }
 
 }
 
 
-/* =========================
-   3DOF
-========================= */
+// ==========================================
+// ERROS
+// ==========================================
 
-let yaw = 0;
+function showCameraError(error) {
 
-let pitch = 0;
+    let message =
+        "❌ Não foi possível iniciar a câmera.";
 
-let roll = 0;
 
+    if (error?.name === "NotAllowedError") {
+
+        message =
+            "🚫 Permissão da câmera foi negada.\n\n" +
+            "Permita a câmera para este site.";
+
+    }
+
+
+    else if (error?.name === "NotFoundError") {
+
+        message =
+            "❌ Nenhuma câmera foi encontrada.";
+
+    }
+
+
+    else if (error?.name === "NotReadableError") {
+
+        message =
+            "⚠️ A câmera está sendo usada " +
+            "por outro aplicativo.";
+
+    }
+
+
+    else if (error?.name === "SecurityError") {
+
+        message =
+            "🔒 O navegador bloqueou a câmera.";
+
+    }
+
+
+    handStatus.textContent =
+        message;
+
+    status.textContent =
+        "MR OFF";
+
+
+    console.log(message);
+
+}
+
+
+// ==========================================
+// PARAR CÂMERA
+// ==========================================
+
+function stopCamera() {
+
+    if (!cameraStream) {
+        return;
+    }
+
+
+    cameraStream
+        .getTracks()
+        .forEach(track => {
+
+            track.stop();
+
+        });
+
+
+    cameraStream = null;
+
+    camera.srcObject = null;
+
+
+    status.textContent =
+        "MR OFF";
+
+    handStatus.textContent =
+        "📷 Câmera desligada";
+
+}
+
+
+// ==========================================
+// INICIAR QUANDO A PÁGINA CARREGAR
+// ==========================================
 
 window.addEventListener(
-    "deviceorientation",
-    event => {
+    "load",
+    () => {
 
-        yaw =
-            event.alpha || 0;
+        startCamera();
 
-        pitch =
-            event.beta || 0;
-
-        roll =
-            event.gamma || 0;
-
-
-        update3DoF();
-
-    },
-    true
+    }
 );
-
-
-function update3DoF() {
-
-    panel.style.transform = `
-
-        translate(-50%,-50%)
-
-        translateZ(-500px)
-
-        rotateX(
-            ${pitch * -0.08}deg
-        )
-
-        rotateY(
-            ${yaw * 0.08}deg
-        )
-
-        rotateZ(
-            ${roll * 0.04}deg
-        )
-
-    `;
-
-}
-
-
-/* =========================
-   APPS
-========================= */
-
-function openApp(app) {
-
-    const window =
-        document.getElementById(
-            "appWindow"
-        );
-
-    const frame =
-        document.getElementById(
-            "appFrame"
-        );
-
-    const title =
-        document.getElementById(
-            "appTitle"
-        );
-
-
-    window.classList.add(
-        "active"
-    );
-
-
-    if(app === "youtube") {
-
-        title.textContent =
-            "▶️ YouTube";
-
-        frame.src =
-            "https://www.youtube.com/";
-
-    }
-
-
-    else if(app === "browser") {
-
-        title.textContent =
-            "🌐 Navegador";
-
-        frame.src =
-            "https://www.google.com/";
-
-    }
-
-
-    else if(app === "games") {
-
-        title.textContent =
-            "🎮 Jogos";
-
-        frame.src =
-            "about:blank";
-
-        frame.srcdoc = `
-
-            <html>
-
-            <body style="
-                margin:0;
-                background:#050b18;
-                color:white;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                height:100vh;
-                font-family:Arial;
-                text-align:center;
-            ">
-
-                <div>
-
-                    <div style="
-                        font-size:80px
-                    ">
-                        🎮
-                    </div>
-
-                    <h1>
-                        Central de Jogos
-                    </h1>
-
-                    <p>
-                        Seus jogos VR
-                        aparecerão aqui.
-                    </p>
-
-                </div>
-
-            </body>
-
-            </html>
-
-        `;
-
-    }
-
-
-    else if(app === "videos") {
-
-        title.textContent =
-            "🎬 Vídeos";
-
-        frame.src =
-            "about:blank";
-
-    }
-
-
-    else if(app === "music") {
-
-        title.textContent =
-            "🎵 Música";
-
-        frame.src =
-            "about:blank";
-
-    }
-
-
-    else if(app === "settings") {
-
-        title.textContent =
-            "⚙️ Configurações";
-
-        frame.src =
-            "about:blank";
-
-    }
-
-}
-
-
-/* =========================
-   FECHAR
-========================= */
-
-function closeApp() {
-
-    document
-        .getElementById(
-            "appWindow"
-        )
-        .classList.remove(
-            "active"
-        );
-
-}

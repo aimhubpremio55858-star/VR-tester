@@ -2,57 +2,38 @@
 <html lang="pt-BR">
 <head>
     <meta charset="utf-8">
-    <title>App MR & Hand Tracking</title>
-    <!-- Carrega o A-Frame e a biblioteca de física -->
+    <title>MR & Hand Tracking</title>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 </head>
 <body>
-    <!-- A-Scene configurada para realidade mista -->
     <a-scene webxr="requiredFeatures: hand-tracking;">
-        
-        <!-- Ambiente 3D -->
         <a-sky color="#0b0b1a"></a-sky>
 
-        <!-- Objeto interativo: Cubo que reage a toques -->
+        <!-- Objeto central -->
         <a-box id="meuObjeto" 
                position="0 1.5 -2" 
                rotation="0 45 0" 
                color="#4CC3D9" 
-               scale="0.4 0.4 0.4"
-               shadow>
+               scale="0.4 0.4 0.4">
         </a-box>
 
         <!-- Câmera -->
         <a-entity camera position="0 1.6 0" look-controls></a-entity>
 
-        <!-- Mão Esquerda com rastreamento -->
-        <a-entity id="leftHand" hand-tracking-controls="hand: left;"></a-entity>
-        
-        <!-- Mão Direita com rastreamento e lógica de interação -->
-        <a-entity id="rightHand" hand-tracking-controls="hand: right;" interacao-mao></a-entity>
-        
+        <!-- Mãos -->
+        <a-entity hand-tracking-controls="hand: left;"></a-entity>
+        <a-entity hand-tracking-controls="hand: right;" interacao-mao></a-entity>
     </a-scene>
 
     <script>
-        // Lógica de interação com as mãos
         AFRAME.registerComponent('interacao-mao', {
             init: function () {
                 const objeto = document.querySelector('#meuObjeto');
 
-                // Quando fizer o gesto de "pinça" (dedão + indicador)
                 this.el.addEventListener('pinchstarted', function () {
-                    // Muda a cor do objeto para uma cor aleatória
                     const cores = ["#EF2D5E", "#FFC65D", "#4CC3D9", "#7BC8A4", "#9b59b6"];
                     const novaCor = cores[Math.floor(Math.random() * cores.length)];
                     objeto.setAttribute('color', novaCor);
-                    
-                    // Aumenta o objeto levemente ao tocar
-                    objeto.setAttribute('scale', '0.6 0.6 0.6');
-                });
-
-                // Quando soltar a pinça
-                this.el.addEventListener('pinchended', function () {
-                    objeto.setAttribute('scale', '0.4 0.4 0.4');
                 });
             }
         });

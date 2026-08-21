@@ -1,26 +1,442 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VR Mixed Reality Tester</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Importação do A-Frame para WebXR -->
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="app.js" defer></script>
+
+    <meta
+        name="viewport"
+        content="width=device-width,
+        initial-scale=1.0,
+        maximum-scale=1.0,
+        user-scalable=no">
+
+    <meta name="theme-color" content="#050912">
+
+    <title>VR BOX MR</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css">
+
+    <!-- MediaPipe -->
+    <script
+        src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js">
+    </script>
+
 </head>
+
 <body>
 
-    <a-scene webxr="requiredFeatures: hand-tracking, hit-test, passthrough;">
-        <!-- Controladores de Rastreamento de Mãos -->
-        <a-entity id="leftHand" hand-tracking-controls="hand: left"></a-entity>
-        <a-entity id="rightHand" hand-tracking-controls="hand: right"></a-entity>
+    <!-- =========================================
+         CÂMERA DE REALIDADE MISTA
+    ========================================== -->
 
-        <!-- Objeto interativo no espaço misto -->
-        <a-box id="interactiveBox" position="0 1.5 -1.5" rotation="0 45 45" color="#00ffcc" interactive-object></a-box>
+    <video
+        id="camera"
+        autoplay
+        muted
+        playsinline>
+    </video>
 
-        <a-sky color="#111111"></a-sky>
-    </a-scene>
+
+    <!-- =========================================
+         CAMADA ESCURA INICIAL
+    ========================================== -->
+
+    <div id="startup">
+
+        <div class="startup-card">
+
+            <div class="vr-logo">
+                🥽
+            </div>
+
+            <h1>
+                VR BOX
+            </h1>
+
+            <div class="subtitle">
+                Realidade Mista
+            </div>
+
+            <div class="features">
+
+                <span>📷 MR</span>
+
+                <span>✋ Hand Tracking</span>
+
+                <span>🧭 3DoF</span>
+
+            </div>
+
+            <button
+                id="startButton">
+
+                📷 ATIVAR CÂMERA
+
+            </button>
+
+            <p id="startupMessage">
+
+                A câmera traseira será usada
+                para criar o ambiente MR.
+
+            </p>
+
+            <div id="errorMessage"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
+         MUNDO VR
+    ========================================== -->
+
+    <main id="vrWorld">
+
+        <!-- Luz virtual -->
+        <div class="virtual-light"></div>
+
+
+        <!-- =====================================
+             PAINEL PRINCIPAL
+        ====================================== -->
+
+        <section
+            id="vrPanel"
+            class="vr-panel">
+
+
+            <!-- BARRA SUPERIOR -->
+
+            <header
+                id="panelHeader"
+                class="panel-header">
+
+
+                <div class="brand">
+
+                    <span class="brand-icon">
+                        🥽
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            VR BOX
+                        </strong>
+
+                        <small>
+                            Mixed Reality
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <div class="header-status">
+
+                    <span
+                        id="mrStatus"
+                        class="status-dot">
+                    </span>
+
+                    <span id="statusText">
+                        3DoF
+                    </span>
+
+                </div>
+
+            </header>
+
+
+            <!-- =================================
+                 CONTEÚDO PRINCIPAL
+            ================================== -->
+
+            <div
+                id="homePage"
+                class="page active">
+
+
+                <div class="welcome">
+
+                    <span>
+                        ESPAÇO VIRTUAL
+                    </span>
+
+                    <h1>
+                        Bem-vindo 👋
+                    </h1>
+
+                    <p>
+                        Controle o VR BOX com
+                        suas mãos.
+                    </p>
+
+                </div>
+
+
+                <!-- =================================
+                     GRID DE APLICATIVOS
+                ================================== -->
+
+                <div
+                    id="appsGrid"
+                    class="apps-grid">
+
+
+                    <button
+                        class="app-card"
+                        data-app="youtube">
+
+                        <span class="app-icon">
+                            ▶️
+                        </span>
+
+                        <span class="app-name">
+                            YouTube
+                        </span>
+
+                        <span class="app-info">
+                            Vídeos
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="app-card"
+                        data-app="games">
+
+                        <span class="app-icon">
+                            🎮
+                        </span>
+
+                        <span class="app-name">
+                            Jogos
+                        </span>
+
+                        <span class="app-info">
+                            Biblioteca
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="app-card"
+                        data-app="videos">
+
+                        <span class="app-icon">
+                            🎬
+                        </span>
+
+                        <span class="app-name">
+                            Vídeos
+                        </span>
+
+                        <span class="app-info">
+                            Seus vídeos
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="app-card"
+                        data-app="music">
+
+                        <span class="app-icon">
+                            🎵
+                        </span>
+
+                        <span class="app-name">
+                            Música
+                        </span>
+
+                        <span class="app-info">
+                            Player
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="app-card"
+                        data-app="browser">
+
+                        <span class="app-icon">
+                            🌐
+                        </span>
+
+                        <span class="app-name">
+                            Navegador
+                        </span>
+
+                        <span class="app-info">
+                            Web
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="app-card"
+                        data-app="settings">
+
+                        <span class="app-icon">
+                            ⚙️
+                        </span>
+
+                        <span class="app-name">
+                            Configurações
+                        </span>
+
+                        <span class="app-info">
+                            Sistema
+                        </span>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================
+                 JANELA DOS APLICATIVOS
+            ================================== -->
+
+            <section
+                id="appWindow"
+                class="app-window">
+
+
+                <div class="window-header">
+
+                    <div
+                        id="windowTitle">
+
+                        Aplicativo
+
+                    </div>
+
+
+                    <button
+                        id="closeWindow">
+
+                        ✕
+
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="windowContent"
+                    class="window-content">
+                </div>
+
+            </section>
+
+
+            <!-- =================================
+                 RODAPÉ
+            ================================== -->
+
+            <footer class="panel-footer">
+
+                <span>
+                    ✋ Pinça = selecionar
+                </span>
+
+                <span>
+                    🖐️ Mova a mão
+                </span>
+
+                <span>
+                    🧭 3DoF
+                </span>
+
+            </footer>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================================
+         PONTEIRO DA MÃO
+    ========================================== -->
+
+    <div
+        id="handCursor"
+        class="hand-cursor">
+
+        <span></span>
+
+    </div>
+
+
+    <!-- =========================================
+         STATUS DA MÃO
+    ========================================== -->
+
+    <div
+        id="handStatus"
+        class="hand-status">
+
+        ✋ Aguardando câmera...
+
+    </div>
+
+
+    <!-- =========================================
+         PAINEL DE DEBUG
+    ========================================== -->
+
+    <div
+        id="debugPanel"
+        class="debug-panel">
+
+        <div>
+            MR:
+            <b id="debugMR">
+                OFF
+            </b>
+        </div>
+
+        <div>
+            Mão:
+            <b id="debugHand">
+                OFF
+            </b>
+        </div>
+
+        <div>
+            Pinça:
+            <b id="debugPinch">
+                OFF
+            </b>
+        </div>
+
+        <div>
+            3DoF:
+            <b id="debug3dof">
+                OFF
+            </b>
+        </div>
+
+    </div>
+
+
+    <script src="app.js"></script>
 
 </body>
-</html>
+
+    </html>

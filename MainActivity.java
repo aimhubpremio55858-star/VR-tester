@@ -4,10 +4,11 @@ import android.Manifest;
 import android.app.Activity;
 import android.os.Bundle;
 import android.content.pm.PackageManager;
+import android.webkit.PermissionRequest;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.PermissionRequest;
 
 public class MainActivity extends Activity {
 
@@ -17,55 +18,74 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
 
-        // Solicita câmera
-        if (checkSelfPermission(
-                Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
+        // Permissão da câmera
+        if (
+            checkSelfPermission(
+                Manifest.permission.CAMERA
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
 
             requestPermissions(
-                    new String[]{
-                            Manifest.permission.CAMERA
-                    },
-                    CAMERA_PERMISSION
+                new String[]{
+                    Manifest.permission.CAMERA
+                },
+                CAMERA_PERMISSION
             );
         }
 
-        webView = new WebView(this);
+
+        // WebView
+        webView =
+            new WebView(this);
+
 
         WebSettings settings =
-                webView.getSettings();
+            webView.getSettings();
+
 
         settings.setJavaScriptEnabled(true);
+
         settings.setDomStorageEnabled(true);
-        settings.setMediaPlaybackRequiresUserGesture(false);
+
+        settings.setMediaPlaybackRequiresUserGesture(
+            false
+        );
+
 
         webView.setWebViewClient(
-                new WebViewClient()
+            new WebViewClient()
         );
+
 
         webView.setWebChromeClient(
-                new android.webkit.WebChromeClient() {
+            new WebChromeClient() {
 
-                    @Override
-                    public void onPermissionRequest(
-                            PermissionRequest request) {
+                @Override
+                public void onPermissionRequest(
+                    PermissionRequest request
+                ) {
 
-                        runOnUiThread(() -> {
+                    runOnUiThread(() -> {
 
-                            request.grant(
-                                    request.getResources()
-                            );
+                        request.grant(
+                            request.getResources()
+                        );
 
-                        });
-                    }
+                    });
+
                 }
+
+            }
         );
+
 
         webView.loadUrl(
-                "file:///android_asset/index.html"
+            "file:///android_asset/index.html"
         );
+
 
         setContentView(webView);
     }

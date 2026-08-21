@@ -1,32 +1,96 @@
-// ==========================================
-// VR BOX — CÂMERA TRASEIRA + MR
-// ==========================================
+// ======================================================
+// VR BOX MR
+// CÂMERA + 3DOF + HAND TRACKING + MENU 3D
+// ======================================================
 
-const camera = document.getElementById("camera");
-const status = document.getElementById("status");
-const handStatus = document.getElementById("handStatus");
+
+// ======================================================
+// ELEMENTOS
+// ======================================================
+
+const camera =
+    document.getElementById("camera");
+
+const cameraButton =
+    document.getElementById("cameraButton");
+
+const permissionScreen =
+    document.getElementById(
+        "permissionScreen"
+    );
+
+const permissionError =
+    document.getElementById(
+        "permissionError"
+    );
+
+const handPointer =
+    document.getElementById(
+        "handPointer"
+    );
+
+const handStatus =
+    document.getElementById(
+        "handStatus"
+    );
+
+const panel =
+    document.getElementById("panel");
+
+const panelHeader =
+    document.getElementById(
+        "panelHeader"
+    );
+
+const status =
+    document.getElementById("status");
+
+const appWindow =
+    document.getElementById(
+        "appWindow"
+    );
+
+const appContent =
+    document.getElementById(
+        "appContent"
+    );
+
+const appTitle =
+    document.getElementById(
+        "appTitle"
+    );
+
+const closeApp =
+    document.getElementById(
+        "closeApp"
+    );
+
 
 let cameraStream = null;
 
+let hands = null;
 
-// ==========================================
-// INICIAR CÂMERA
-// ==========================================
+let handRunning = false;
+
+let lastPinch = false;
+
+let handX = 0;
+
+let handY = 0;
+
+
+// ======================================================
+// CÂMERA
+// ======================================================
 
 async function startCamera() {
 
-    console.log("VR BOX: iniciando câmera...");
+    permissionError.textContent = "";
 
-    if (!navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia) {
+    cameraButton.textContent =
+        "📷 ABRINDO CÂMERA...";
 
-        showCameraError(
-            "Seu navegador não permite acesso à câmera."
-        );
-
-        return;
-    }
-
+    cameraButton.disabled = true;
 
     handStatus.textContent =
         "📷 Pedindo permissão da câmera...";
@@ -34,196 +98,1029 @@ async function startCamera() {
 
     try {
 
-        // Primeira tentativa:
-        // câmera traseira
+        if (
+            !navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia
+        ) {
+
+            throw new Error(
+                "getUserMedia não está disponível."
+            );
+        }
+
+
+        // ==========================================
+        // TENTA CÂMERA TRASEIRA
+        // ==========================================
 
         cameraStream =
-            await navigator.mediaDevices.getUserMedia({
+            await navigator.mediaDevices
+                .getUserMedia({
 
-                video: {
-                    facingMode: {
-                        ideal: "environment"
+                    video: {
+
+                        facingMode: {
+                            ideal: "environment"
+                        },
+
+                        width: {
+                            ideal: 1280
+                        },
+
+                        height: {
+                            ideal: 720
+                        }
+
                     },
 
-                    width: {
-                        ideal: 1920
-                    },
+                    audio: false
 
-                    height: {
-                        ideal: 1080
-                    }
-                },
+                });
 
-                audio: false
-
-            });
-
-
-        // Coloca a câmera no vídeo
 
         camera.srcObject =
             cameraStream;
 
 
-        // Aguarda o vídeo carregar
+        await new Promise(
+            resolve => {
 
-        await new Promise((resolve) => {
+                if (
+                    camera.readyState >= 1
+                ) {
 
-            camera.onloadedmetadata =
-                resolve;
+                    resolve();
 
-        });
+                } else {
+
+                    camera.onloadedmetadata =
+                        resolve;
+                }
+
+            }
+        );
 
 
         await camera.play();
 
 
-        // ==================================
-        // SUCESSO
-        // ==================================
+        // ==========================================
+        // ESCONDE TELA DE PERMISSÃO
+        // ==========================================
+
+        permissionScreen.style.display =
+            "none";
+
 
         status.textContent =
-            "3DoF • MR • CÂMERA";
+            "3DoF • MR • ATIVO";
+
 
         handStatus.textContent =
-            "📷 MR ativa";
+            "✋ Procurando sua mão...";
 
 
         console.log(
-            "VR BOX: câmera traseira ativada!"
+            "Câmera iniciada!"
         );
 
 
-        // Descobre qual câmera foi usada
+        // ==========================================
+        // INICIA HAND TRACKING
+        // ==========================================
 
-        const tracks =
-            cameraStream.getVideoTracks();
+        startHandTracking();
 
-        if (tracks.length > 0) {
 
-            console.log(
-                "Câmera:",
-                tracks[0].label
+        // ==========================================
+        // INICIA 3DOF
+        // ==========================================
+
+        start3DoF();
+
+    }
+
+    catch(error) {
+
+        console.error(error);
+
+        cameraButton.disabled =
+            false;
+
+        cameraButton.textContent =
+            "📷 TENTAR NOVAMENTE";
+
+
+        let msg =
+            "Não foi possível abrir a câmera.";
+
+
+        if (
+            error.name ===
+            "NotAllowedError"
+        ) {
+
+            msg =
+                "🚫 Permissão negada.\n" +
+                "Permita a câmera para este site.";
+
+        }
+
+        else if (
+            error.name ===
+            "NotFoundError"
+        ) {
+
+            msg =
+                "❌ Nenhuma câmera encontrada.";
+
+        }
+
+        else if (
+            error.name ===
+            "NotReadableError"
+        ) {
+
+            msg =
+                "⚠️ A câmera está sendo usada " +
+                "por outro aplicativo.";
+
+        }
+
+        else if (
+            location.protocol !==
+            "https:"
+        ) {
+
+            msg =
+                "🔒 Abra o projeto pelo GitHub Pages " +
+                "usando HTTPS.";
+
+        }
+
+
+        permissionError.textContent =
+            msg;
+
+        handStatus.textContent =
+            msg;
+    }
+}
+
+
+cameraButton.addEventListener(
+    "click",
+    startCamera
+);
+
+
+// ======================================================
+// 3DOF
+// ======================================================
+
+let yaw = 0;
+
+let pitch = 0;
+
+let roll = 0;
+
+
+function start3DoF() {
+
+    window.addEventListener(
+        "deviceorientation",
+        event => {
+
+            yaw =
+                event.alpha || 0;
+
+            pitch =
+                event.beta || 0;
+
+            roll =
+                event.gamma || 0;
+
+
+            update3DoF();
+
+        },
+        true
+    );
+
+}
+
+
+function update3DoF() {
+
+    panel.style.transform = `
+
+        translate(-50%, -50%)
+
+        translateZ(-650px)
+
+        rotateX(
+            ${pitch * -0.06}deg
+        )
+
+        rotateY(
+            ${yaw * 0.05}deg
+        )
+
+        rotateZ(
+            ${roll * 0.03}deg
+        )
+
+    `;
+}
+
+
+// ======================================================
+// HAND TRACKING
+// ======================================================
+
+function startHandTracking() {
+
+    if (
+        typeof Hands ===
+        "undefined"
+    ) {
+
+        handStatus.textContent =
+            "⚠️ Hand Tracking não carregou.";
+
+        return;
+    }
+
+
+    hands =
+        new Hands({
+
+            locateFile: file => {
+
+                return (
+                    "https://cdn.jsdelivr.net/npm/" +
+                    "@mediapipe/hands/" +
+                    file
+                );
+
+            }
+
+        });
+
+
+    hands.setOptions({
+
+        maxNumHands: 1,
+
+        modelComplexity: 1,
+
+        minDetectionConfidence: .6,
+
+        minTrackingConfidence: .6
+
+    });
+
+
+    hands.onResults(
+        onHandResults
+    );
+
+
+    handRunning = true;
+
+    processHand();
+}
+
+
+// ======================================================
+// PROCESSAR MÃO
+// ======================================================
+
+async function processHand() {
+
+    if (!handRunning) {
+        return;
+    }
+
+
+    if (
+        camera.readyState >= 2
+    ) {
+
+        try {
+
+            await hands.send({
+                image: camera
+            });
+
+        }
+
+        catch(error) {
+
+            console.error(
+                "Hand Tracking:",
+                error
             );
 
         }
 
     }
 
-    catch (error) {
 
-        console.error(
-            "Erro da câmera:",
-            error
-        );
-
-
-        showCameraError(error);
-
-    }
-
+    requestAnimationFrame(
+        processHand
+    );
 }
 
 
-// ==========================================
-// ERROS
-// ==========================================
+// ======================================================
+// RESULTADO DA MÃO
+// ======================================================
 
-function showCameraError(error) {
+function onHandResults(results) {
 
-    let message =
-        "❌ Não foi possível iniciar a câmera.";
+    if (
+        !results.multiHandLandmarks ||
+        results.multiHandLandmarks.length === 0
+    ) {
 
+        handPointer.style.display =
+            "none";
 
-    if (error?.name === "NotAllowedError") {
+        handStatus.textContent =
+            "✋ Mostre sua mão para a câmera.";
 
-        message =
-            "🚫 Permissão da câmera foi negada.\n\n" +
-            "Permita a câmera para este site.";
+        removeHover();
 
-    }
-
-
-    else if (error?.name === "NotFoundError") {
-
-        message =
-            "❌ Nenhuma câmera foi encontrada.";
-
-    }
-
-
-    else if (error?.name === "NotReadableError") {
-
-        message =
-            "⚠️ A câmera está sendo usada " +
-            "por outro aplicativo.";
-
-    }
-
-
-    else if (error?.name === "SecurityError") {
-
-        message =
-            "🔒 O navegador bloqueou a câmera.";
-
-    }
-
-
-    handStatus.textContent =
-        message;
-
-    status.textContent =
-        "MR OFF";
-
-
-    console.log(message);
-
-}
-
-
-// ==========================================
-// PARAR CÂMERA
-// ==========================================
-
-function stopCamera() {
-
-    if (!cameraStream) {
         return;
     }
 
 
-    cameraStream
-        .getTracks()
-        .forEach(track => {
-
-            track.stop();
-
-        });
+    const landmarks =
+        results.multiHandLandmarks[0];
 
 
-    cameraStream = null;
+    // ==========================================
+    // DEDO INDICADOR
+    // ==========================================
 
-    camera.srcObject = null;
+    const index =
+        landmarks[8];
 
 
-    status.textContent =
-        "MR OFF";
+    handX =
+        index.x * window.innerWidth;
 
-    handStatus.textContent =
-        "📷 Câmera desligada";
+    handY =
+        index.y * window.innerHeight;
+
+
+    handPointer.style.display =
+        "block";
+
+
+    handPointer.style.left =
+        handX + "px";
+
+
+    handPointer.style.top =
+        handY + "px";
+
+
+    // ==========================================
+    // PINÇA
+    // indicador + polegar
+    // ==========================================
+
+    const thumb =
+        landmarks[4];
+
+
+    const dx =
+        index.x - thumb.x;
+
+    const dy =
+        index.y - thumb.y;
+
+
+    const distance =
+        Math.sqrt(
+            dx * dx +
+            dy * dy
+        );
+
+
+    const pinch =
+        distance < .055;
+
+
+    if (pinch) {
+
+        handPointer.classList.add(
+            "pinch"
+        );
+
+        handStatus.textContent =
+            "🤏 Pinça detectada";
+
+    } else {
+
+        handPointer.classList.remove(
+            "pinch"
+        );
+
+        handStatus.textContent =
+            "✋ Mão detectada";
+    }
+
+
+    // ==========================================
+    // HOVER
+    // ==========================================
+
+    updateHandHover(
+        handX,
+        handY
+    );
+
+
+    // ==========================================
+    // CLIQUE POR PINÇA
+    // ==========================================
+
+    if (
+        pinch &&
+        !lastPinch
+    ) {
+
+        handClick(
+            handX,
+            handY
+        );
+
+    }
+
+
+    lastPinch =
+        pinch;
+}
+
+
+// ======================================================
+// HOVER
+// ======================================================
+
+function updateHandHover(x, y) {
+
+    removeHover();
+
+
+    const element =
+        document.elementFromPoint(
+            x,
+            y
+        );
+
+
+    if (
+        element &&
+        element.closest(".app")
+    ) {
+
+        element
+            .closest(".app")
+            .classList.add(
+                "handHover"
+            );
+    }
 
 }
 
 
-// ==========================================
-// INICIAR QUANDO A PÁGINA CARREGAR
-// ==========================================
+function removeHover() {
 
-window.addEventListener(
-    "load",
-    () => {
+    document
+        .querySelectorAll(".handHover")
+        .forEach(element => {
 
-        startCamera();
+            element.classList.remove(
+                "handHover"
+            );
+
+        });
+}
+
+
+// ======================================================
+// CLIQUE COM A MÃO
+// ======================================================
+
+function handClick(x, y) {
+
+    const element =
+        document.elementFromPoint(
+            x,
+            y
+        );
+
+
+    if (!element) {
+        return;
+    }
+
+
+    const app =
+        element.closest(".app");
+
+
+    if (app) {
+
+        const name =
+            app.dataset.app;
+
+        openApp(name);
+
+        return;
+    }
+
+
+    if (
+        element.id ===
+        "closeApp"
+    ) {
+
+        closeApplication();
 
     }
+
+}
+
+
+// ======================================================
+// BOTÕES NORMAIS
+// ======================================================
+
+document
+    .querySelectorAll(".app")
+    .forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                openApp(
+                    button.dataset.app
+                );
+
+            }
+        );
+
+    });
+
+
+closeApp.addEventListener(
+    "click",
+    closeApplication
 );
+
+
+// ======================================================
+// ABRIR APPS
+// ======================================================
+
+function openApp(app) {
+
+    appWindow.classList.add(
+        "active"
+    );
+
+
+    // ==========================================
+    // YOUTUBE
+    // ==========================================
+
+    if (app === "youtube") {
+
+        appTitle.textContent =
+            "▶️ YouTube";
+
+
+        appContent.innerHTML = `
+
+            <div class="internalApp youtubeBox">
+
+                <h1>
+                    ▶️ YouTube VR
+                </h1>
+
+                <p>
+                    Digite o ID de um vídeo
+                    do YouTube.
+                </p>
+
+                <input
+                    id="youtubeId"
+                    placeholder="Ex: dQw4w9WgXcQ"
+                >
+
+                <button
+                    id="youtubePlay">
+                    ▶ Assistir
+                </button>
+
+                <div id="youtubePlayer">
+                </div>
+
+            </div>
+
+        `;
+
+
+        document
+            .getElementById(
+                "youtubePlay"
+            )
+            .onclick = playYouTube;
+
+    }
+
+
+    // ==========================================
+    // JOGOS
+    // ==========================================
+
+    else if (app === "games") {
+
+        appTitle.textContent =
+            "🎮 Jogos";
+
+
+        appContent.innerHTML = `
+
+            <div class="internalApp"
+                 style="text-align:center">
+
+                <div style="
+                    font-size:80px;
+                    margin-top:50px;
+                ">
+                    🎮
+                </div>
+
+                <h1>
+                    Central de Jogos
+                </h1>
+
+                <p>
+                    Seus jogos poderão
+                    ficar dentro desta área.
+                </p>
+
+                <button
+                    onclick="miniGame()"
+                    style="
+                        padding:15px 25px;
+                        border:0;
+                        border-radius:15px;
+                        background:#147cff;
+                        color:white;
+                        font-weight:bold;
+                    ">
+                    🚀 Testar jogo
+                </button>
+
+            </div>
+
+        `;
+
+    }
+
+
+    // ==========================================
+    // VÍDEOS
+    // ==========================================
+
+    else if (app === "videos") {
+
+        appTitle.textContent =
+            "🎬 Vídeos";
+
+
+        appContent.innerHTML = `
+
+            <div class="internalApp"
+                 style="text-align:center">
+
+                <h1>
+                    🎬 Vídeos
+                </h1>
+
+                <p>
+                    Central de vídeos VR.
+                </p>
+
+                <input
+                    type="file"
+                    accept="video/*"
+                    id="videoFile"
+                >
+
+                <video
+                    id="localVideo"
+                    controls
+                    style="
+                        width:100%;
+                        max-height:70%;
+                        margin-top:20px;
+                    ">
+                </video>
+
+            </div>
+
+        `;
+
+
+        document
+            .getElementById("videoFile")
+            .onchange = event => {
+
+                const file =
+                    event.target.files[0];
+
+                if (!file) {
+                    return;
+                }
+
+
+                const url =
+                    URL.createObjectURL(
+                        file
+                    );
+
+
+                document
+                    .getElementById(
+                        "localVideo"
+                    )
+                    .src = url;
+
+            };
+
+    }
+
+
+    // ==========================================
+    // MÚSICA
+    // ==========================================
+
+    else if (app === "music") {
+
+        appTitle.textContent =
+            "🎵 Música";
+
+
+        appContent.innerHTML = `
+
+            <div class="internalApp"
+                 style="text-align:center">
+
+                <h1>
+                    🎵 Música
+                </h1>
+
+                <p>
+                    Selecione uma música
+                    do aparelho.
+                </p>
+
+                <input
+                    type="file"
+                    accept="audio/*"
+                    id="audioFile"
+                >
+
+                <audio
+                    id="audioPlayer"
+                    controls
+                    style="
+                        width:100%;
+                        margin-top:30px;
+                    ">
+                </audio>
+
+            </div>
+
+        `;
+
+
+        document
+            .getElementById("audioFile")
+            .onchange = event => {
+
+                const file =
+                    event.target.files[0];
+
+                if (!file) {
+                    return;
+                }
+
+
+                document
+                    .getElementById(
+                        "audioPlayer"
+                    )
+                    .src =
+                    URL.createObjectURL(
+                        file
+                    );
+
+            };
+
+    }
+
+
+    // ==========================================
+    // NAVEGADOR
+    // ==========================================
+
+    else if (app === "browser") {
+
+        appTitle.textContent =
+            "🌐 Navegador";
+
+
+        appContent.innerHTML = `
+
+            <div class="internalApp"
+                 style="text-align:center">
+
+                <h1>
+                    🌐 Navegador
+                </h1>
+
+                <p>
+                    Alguns sites bloqueiam
+                    abertura dentro de iframe.
+                </p>
+
+                <button
+                    onclick="
+                    window.open(
+                        'https://www.google.com',
+                        '_blank'
+                    )"
+                    style="
+                        padding:15px 25px;
+                        border:0;
+                        border-radius:15px;
+                        background:#147cff;
+                        color:white;
+                    ">
+                    🌐 Abrir navegador
+                </button>
+
+            </div>
+
+        `;
+
+    }
+
+
+    // ==========================================
+    // CONFIGURAÇÕES
+    // ==========================================
+
+    else if (app === "settings") {
+
+        appTitle.textContent =
+            "⚙️ Configurações";
+
+
+        appContent.innerHTML = `
+
+            <div class="internalApp">
+
+                <h1>
+                    ⚙️ Configurações
+                </h1>
+
+                <p>
+                    VR BOX
+                </p>
+
+                <hr>
+
+                <p>
+                    🧭 3DoF: ATIVO
+                </p>
+
+                <p>
+                    📷 MR: ATIVO
+                </p>
+
+                <p>
+                    ✋ Hand Tracking:
+                    ATIVO
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+// ======================================================
+// YOUTUBE
+// ======================================================
+
+function playYouTube() {
+
+    const input =
+        document.getElementById(
+            "youtubeId"
+        );
+
+
+    const id =
+        input.value.trim();
+
+
+    if (!id) {
+
+        alert(
+            "Digite o ID do vídeo."
+        );
+
+        return;
+    }
+
+
+    document
+        .getElementById(
+            "youtubePlayer"
+        )
+        .innerHTML = `
+
+        <iframe
+            class="youtubeVideo"
+            src="https://www.youtube.com/embed/${encodeURIComponent(id)}"
+            allow="
+                autoplay;
+                encrypted-media;
+                picture-in-picture"
+            allowfullscreen>
+        </iframe>
+
+    `;
+
+}
+
+
+// ======================================================
+// MINI JOGO DE TESTE
+// ======================================================
+
+function miniGame() {
+
+    appContent.innerHTML = `
+
+        <div class="internalApp"
+             style="
+                text-align:center;
+             ">
+
+            <h1>
+                🚀 Jogo VR
+            </h1>
+
+            <p>
+                Pegue o alvo!
+            </p>
+
+            <button
+                id="target"
+                style="
+                    position:absolute;
+                    left:50%;
+                    top:50%;
+                    transform:translate(-50%,-50%);
+                    width:100px;
+                    height:100px;
+                    border-radius:50%;
+                    border:0;
+                    background:#ff315c;
+                    color:white;
+                    font-size:30px;
+                ">
+                🎯
+            </button>
+
+        </div>
+    `;
+
+
+    document
+        .getElementByI

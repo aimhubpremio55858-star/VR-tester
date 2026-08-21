@@ -4,31 +4,37 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission
-        android:name="android.permission.CAMERA"/>
+        android:name="android.permission.CAMERA" />
 
     <uses-permission
-        android:name="android.permission.INTERNET"/>
+        android:name="android.permission.INTERNET" />
+
 
     <uses-feature
         android:name="android.hardware.camera"
-        android:required="true"/>
+        android:required="true" />
+
 
     <application
-        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-        android:label="VR BOX">
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+        android:label="VR BOX"
+        android:hardwareAccelerated="true">
+
 
         <activity
             android:name=".MainActivity"
             android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize"
             android:exported="true">
+
 
             <intent-filter>
 
                 <action
-                    android:name="android.intent.action.MAIN"/>
+                    android:name="android.intent.action.MAIN" />
 
                 <category
-                    android:name="android.intent.category.LAUNCHER"/>
+                    android:name="android.intent.category.LAUNCHER" />
 
             </intent-filter>
 

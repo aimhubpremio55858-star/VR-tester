@@ -1,442 +1,64 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width,
-        initial-scale=1.0,
-        maximum-scale=1.0,
-        user-scalable=no">
-
-    <meta name="theme-color" content="#050912">
-
-    <title>VR BOX MR</title>
-
-    <link
-        rel="stylesheet"
-        href="style.css">
-
-    <!-- MediaPipe -->
-    <script
-        src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js">
-    </script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VR Box - Hand Tracking</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-
-    <!-- =========================================
-         CÂMERA DE REALIDADE MISTA
-    ========================================== -->
-
-    <video
-        id="camera"
-        autoplay
-        muted
-        playsinline>
-    </video>
-
-
-    <!-- =========================================
-         CAMADA ESCURA INICIAL
-    ========================================== -->
-
-    <div id="startup">
-
-        <div class="startup-card">
-
-            <div class="vr-logo">
-                🥽
+    <div class="vr-container">
+        <!-- Canvas para captura de câmera -->
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas"></canvas>
+        
+        <!-- UI Overlay -->
+        <div class="ui-overlay">
+            <!-- Status -->
+            <div class="status-panel">
+                <div id="status" class="status-text">Aguardando câmera...</div>
+                <div id="gesture" class="gesture-text">Gesto: Nenhum</div>
+                <div id="fps" class="fps-text">FPS: 0</div>
             </div>
-
-            <h1>
-                VR BOX
-            </h1>
-
-            <div class="subtitle">
-                Realidade Mista
+            
+            <!-- Objetos 3D Interativos -->
+            <div class="objects-container">
+                <div class="vr-object" id="obj1" data-id="1">
+                    Cubo 1
+                </div>
+                <div class="vr-object" id="obj2" data-id="2">
+                    Esfera 2
+                </div>
+                <div class="vr-object" id="obj3" data-id="3">
+                    Pirâmide 3
+                </div>
             </div>
-
-            <div class="features">
-
-                <span>📷 MR</span>
-
-                <span>✋ Hand Tracking</span>
-
-                <span>🧭 3DoF</span>
-
+            
+            <!-- Hand Cursor -->
+            <div id="hand-cursor" class="hand-cursor"></div>
+            
+            <!-- Controles -->
+            <div class="controls">
+                <button id="toggleMR" class="control-btn">🔄 Toggle AR</button>
+                <button id="reset" class="control-btn">🔄 Reset</button>
+                <button id="toggleFullscreen" class="control-btn">⛶ Fullscreen</button>
             </div>
-
-            <button
-                id="startButton">
-
-                📷 ATIVAR CÂMERA
-
-            </button>
-
-            <p id="startupMessage">
-
-                A câmera traseira será usada
-                para criar o ambiente MR.
-
-            </p>
-
-            <div id="errorMessage"></div>
-
+            
+            <!-- Instruções -->
+            <div class="instructions">
+                <p>👆 Toque para mover a mão</p>
+                <p>✌️ 2 dedos = Pinça (aumentar)</p>
+                <p>✊ 3+ dedos = Agarrar (girar)</p>
+            </div>
         </div>
-
     </div>
 
-
-    <!-- =========================================
-         MUNDO VR
-    ========================================== -->
-
-    <main id="vrWorld">
-
-        <!-- Luz virtual -->
-        <div class="virtual-light"></div>
-
-
-        <!-- =====================================
-             PAINEL PRINCIPAL
-        ====================================== -->
-
-        <section
-            id="vrPanel"
-            class="vr-panel">
-
-
-            <!-- BARRA SUPERIOR -->
-
-            <header
-                id="panelHeader"
-                class="panel-header">
-
-
-                <div class="brand">
-
-                    <span class="brand-icon">
-                        🥽
-                    </span>
-
-                    <div>
-
-                        <strong>
-                            VR BOX
-                        </strong>
-
-                        <small>
-                            Mixed Reality
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-                <div class="header-status">
-
-                    <span
-                        id="mrStatus"
-                        class="status-dot">
-                    </span>
-
-                    <span id="statusText">
-                        3DoF
-                    </span>
-
-                </div>
-
-            </header>
-
-
-            <!-- =================================
-                 CONTEÚDO PRINCIPAL
-            ================================== -->
-
-            <div
-                id="homePage"
-                class="page active">
-
-
-                <div class="welcome">
-
-                    <span>
-                        ESPAÇO VIRTUAL
-                    </span>
-
-                    <h1>
-                        Bem-vindo 👋
-                    </h1>
-
-                    <p>
-                        Controle o VR BOX com
-                        suas mãos.
-                    </p>
-
-                </div>
-
-
-                <!-- =================================
-                     GRID DE APLICATIVOS
-                ================================== -->
-
-                <div
-                    id="appsGrid"
-                    class="apps-grid">
-
-
-                    <button
-                        class="app-card"
-                        data-app="youtube">
-
-                        <span class="app-icon">
-                            ▶️
-                        </span>
-
-                        <span class="app-name">
-                            YouTube
-                        </span>
-
-                        <span class="app-info">
-                            Vídeos
-                        </span>
-
-                    </button>
-
-
-                    <button
-                        class="app-card"
-                        data-app="games">
-
-                        <span class="app-icon">
-                            🎮
-                        </span>
-
-                        <span class="app-name">
-                            Jogos
-                        </span>
-
-                        <span class="app-info">
-                            Biblioteca
-                        </span>
-
-                    </button>
-
-
-                    <button
-                        class="app-card"
-                        data-app="videos">
-
-                        <span class="app-icon">
-                            🎬
-                        </span>
-
-                        <span class="app-name">
-                            Vídeos
-                        </span>
-
-                        <span class="app-info">
-                            Seus vídeos
-                        </span>
-
-                    </button>
-
-
-                    <button
-                        class="app-card"
-                        data-app="music">
-
-                        <span class="app-icon">
-                            🎵
-                        </span>
-
-                        <span class="app-name">
-                            Música
-                        </span>
-
-                        <span class="app-info">
-                            Player
-                        </span>
-
-                    </button>
-
-
-                    <button
-                        class="app-card"
-                        data-app="browser">
-
-                        <span class="app-icon">
-                            🌐
-                        </span>
-
-                        <span class="app-name">
-                            Navegador
-                        </span>
-
-                        <span class="app-info">
-                            Web
-                        </span>
-
-                    </button>
-
-
-                    <button
-                        class="app-card"
-                        data-app="settings">
-
-                        <span class="app-icon">
-                            ⚙️
-                        </span>
-
-                        <span class="app-name">
-                            Configurações
-                        </span>
-
-                        <span class="app-info">
-                            Sistema
-                        </span>
-
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <!-- =================================
-                 JANELA DOS APLICATIVOS
-            ================================== -->
-
-            <section
-                id="appWindow"
-                class="app-window">
-
-
-                <div class="window-header">
-
-                    <div
-                        id="windowTitle">
-
-                        Aplicativo
-
-                    </div>
-
-
-                    <button
-                        id="closeWindow">
-
-                        ✕
-
-                    </button>
-
-                </div>
-
-
-                <div
-                    id="windowContent"
-                    class="window-content">
-                </div>
-
-            </section>
-
-
-            <!-- =================================
-                 RODAPÉ
-            ================================== -->
-
-            <footer class="panel-footer">
-
-                <span>
-                    ✋ Pinça = selecionar
-                </span>
-
-                <span>
-                    🖐️ Mova a mão
-                </span>
-
-                <span>
-                    🧭 3DoF
-                </span>
-
-            </footer>
-
-        </section>
-
-    </main>
-
-
-    <!-- =========================================
-         PONTEIRO DA MÃO
-    ========================================== -->
-
-    <div
-        id="handCursor"
-        class="hand-cursor">
-
-        <span></span>
-
-    </div>
-
-
-    <!-- =========================================
-         STATUS DA MÃO
-    ========================================== -->
-
-    <div
-        id="handStatus"
-        class="hand-status">
-
-        ✋ Aguardando câmera...
-
-    </div>
-
-
-    <!-- =========================================
-         PAINEL DE DEBUG
-    ========================================== -->
-
-    <div
-        id="debugPanel"
-        class="debug-panel">
-
-        <div>
-            MR:
-            <b id="debugMR">
-                OFF
-            </b>
-        </div>
-
-        <div>
-            Mão:
-            <b id="debugHand">
-                OFF
-            </b>
-        </div>
-
-        <div>
-            Pinça:
-            <b id="debugPinch">
-                OFF
-            </b>
-        </div>
-
-        <div>
-            3DoF:
-            <b id="debug3dof">
-                OFF
-            </b>
-        </div>
-
-    </div>
-
-
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="hand-tracker.js"></script>
+    <script src="vr-interaction.js"></script>
     <script src="app.js"></script>
-
 </body>
-
-    </html>
+</html>
